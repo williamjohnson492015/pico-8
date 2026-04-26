@@ -752,14 +752,16 @@ function draw_textbox(text,face)
 end
 
 function draw_text(rows,col,x,y)
+	--local iterate=iterate or false
+	--local text_index=text_index or 0
 	local rows=rows or 4
 	local col=col or 14
 	local x=x or 4
 	local y=y or 48
 	--end
 	 
-	if (active_text) then
-		if (scene=="game") then
+	if active_text then
+		if scene=="game" then
 			textx=mapx*8+x
 			texty=mapy*8+y
 		else
@@ -779,8 +781,7 @@ function draw_text(rows,col,x,y)
 		read=false	
 	else
 		read=true
-	end
-	
+	end	
 end
 
 function draw_box(rows,columns,x,y,face)
@@ -1157,6 +1158,12 @@ function move_player()
 	
 	interact(newx,newy)
 	
+	if newx~=p.x or newy~=p.y then
+		if cleaned_reads==false then
+			clean_reads()
+		end
+	end
+	
 	if (can_move(newx,newy)) then
 		p.x=mid(0,newx,127)
 		p.y=mid(0,newy,63)
@@ -1167,9 +1174,9 @@ end
 
 function interact(x,y)
 	--check for text
-	if (is_tile(text,x,y)) then
+	if is_tile(text,x,y) then
 		active_text=get_text(x,y)
-	end
+	end	
 end
 
 -->8
@@ -1189,7 +1196,7 @@ function map_setup()
 	,62]],",")
 	anim2=split([[13,15,29,45,61
 	,63]],",")
-	text=split([[22,24,37,63]],",")
+	text=split([[26,63]],",")
 	lose={}
 	win={}
 	cutscene={}	
@@ -1249,32 +1256,83 @@ end
 --cutscene code
 
 function text_setup()
-	texts={}
-	variables={}
-	quests={}
-	conversations={}
-	cutscenes={}
+	--story variables
+	story_beat=0
+	next_text=0
+	cleaned_reads=true
+	
+	--setup tables
+	text_data={}
+	cutscene_data={}
 	
 	--common text
 	locked_door="the door is locked.\nperhaps there's a\nkey nearby..."
 
 	--adding text to dictionary
-	add_text(1,3,"first sign!")
-	add_text(7,3,"oh, look!\na sign!")
-	add_text(8,1,"a key!")
-	add_text(12,2,"a chest!\nthere's 10 gold inside!")
-	add_text(7,13,locked_door)
+ add_text(2,4,1,false,true,"",0,0,"as you leave this once holy \nplace to face the agents of \ndarkness, you are struck by \na feeling that you will \nlikely never return.")
+ add_text(2,4,2,true,true,"",0,1,"did your goddess feel the \nsame when she stood alone \nagainst the dark gods?")	
 	
-	
-
 end
 
-function add_text(x,y,message,selfswitch,switch)
-	texts[x+y*128]=message
+function add_text(x,y,order,text_end,set_selfswitch,switch,story_req,set_story,text)
+--x,y that triggers it
+--the boolean here is being set for normal iteration as false by default
+--order of text as a number
+--text_end is a boolean,false means there is more,true means it is the end
+--set_selfswitch is a boolean, false will allow repeats, true will not allow repeats
+--the boolean here is being set for normal selfswitch use if being used, false by default
+--switch is a string that will be looked up if true otherwise ignore
+--story_req is a num of the required story_beat, if 0 then doesn't matter
+--set_story sets the story beat
+	add(text_data,{x+y*128,false,order,text_end,set_selfswitch,false,switch,story_req,set_story,text})
 end
 
 function get_text(x,y)
-	return texts[x+y*128]
+--search texts for x and y
+	local index=x+y*128
+	local exists=exists_in(text_data,index)
+	
+	--does something exist on this tile?
+	if exists then
+		exists+=next_text
+		local index,read,order,text_end,set_self,self,switch,story_req,set_story,text=unpack(text_data[exists])
+		--show text
+		if read then
+			return nil
+		else
+			--update read
+			text_data[exists][2]=true
+			--update selfswitch as needed
+			if set_self then
+				text_data[exists][6]=true
+			end
+			--iterate if needed
+			if text_end then
+				next_text=0
+				--setup cleaner
+				cleaned_reads=false
+			else
+				next_text+=1
+			end
+			--send text
+			return text
+		end
+	else
+		--nothing was found for this tile
+		return nil
+	end
+end
+
+function clean_reads()
+--if selfswitch is false,then 
+--update reads set to true from
+--interactions
+	for i=1,#text_data do
+		if text_data[i][6]==false and text_data[i][2] then
+			text_data[i][2]=false
+		end
+	end
+	cleaned_reads=true
 end
 
 function add_cutscene(map_num,seq,switch,obj,action,key,dest,frames,text)
