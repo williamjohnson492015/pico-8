@@ -9,7 +9,7 @@ Perhaps. But as long as the knight of light draws breath, they'll fight on. The 
 
 Menu system: 75% done only Options remains;
 Map progress: 4% done 1/27 maps;
-Dialogue progress: 1% structure started;
+Dialogue progress: 20% structure started;
 Battlesystem progress: 0%;
 Cutscene progress: 0%;
 Character options: 0%
