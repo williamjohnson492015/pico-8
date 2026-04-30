@@ -54,14 +54,15 @@ function init_game()
 	game_over=false
 	menu_active=false
 	--setup calls
-	map_setup()
-	text_setup()
+	init_map() --in map code
+	init_text() --in text code
 	init_statuseffect()
 	init_inventory()
 	init_skills()
 	init_status()
-	make_player()
+	init_player() --in player code
 	init_npcs()
+	init_switches()
 	--setup main functions
 	_update = update_game 
 	_draw = draw_game
@@ -192,6 +193,11 @@ function init_temp_stats()
 	for i=1,9 do
 		add(p.temp_stats,0)
 	end
+end
+
+function init_switches()
+	switches={}
+	--add(switches,{"test",false})
 end
 
 --main config
@@ -569,6 +575,9 @@ function draw_game()
 				--options
 			end
 		end
+		--==testing area==
+		--print(tile,12)
+		--==end of testing area==
 	else
 		draw_win_lose()
 	end
@@ -852,7 +861,7 @@ end
 -->8
 --player code
 
-function make_player()
+function init_player()
 --sets all initial player data
 
 	p={}
@@ -1174,15 +1183,15 @@ end
 
 function interact(x,y)
 	--check for text
-	if is_tile(text,x,y) then
-		active_text=get_text(x,y)
-	end	
+	--if is_tile(text,x,y) then
+	active_text=get_text(x,y)
+	--end	
 end
 
 -->8
 --map code
 
-function map_setup()
+function init_map()
 	--timers
 	timer=0
 	anim_time=15 --30 = 1 second
@@ -1196,7 +1205,7 @@ function map_setup()
 	,62]],",")
 	anim2=split([[13,15,29,45,61
 	,63]],",")
-	text=split([[26,63]],",")
+	--text=split([[26,63]],",")
 	lose={}
 	win={}
 	cutscene={}	
@@ -1253,9 +1262,9 @@ function unswap_tile(x,y)
 	mset(x,y,tile-1)
 end
 -->8
---cutscene code
+--text code
 
-function text_setup()
+function init_text()
 	--story variables
 	story_beat=0
 	next_text=0
@@ -1269,12 +1278,41 @@ function text_setup()
 	locked_door="the door is locked.\nperhaps there's a\nkey nearby..."
 
 	--adding text to dictionary
- add_text(2,4,1,false,true,"",0,0,"as you leave this once holy \nplace to face the agents of \ndarkness, you are struck by \na feeling that you will \nlikely never return.")
- add_text(2,4,2,true,true,"",0,1,"did your goddess feel the \nsame when she stood alone \nagainst the dark gods?")	
+	--(x,y,order,end?,self?,switch?,story?,set_story?,text
+	set_alltext()
 	
 end
 
+function set_alltext()	
+	temp_text_data={}
+	--initial text state
+--x,y,order,end?,self?,switch,story_req,set_story,text	
+	--map1
+	temp_text_data=split([[
+	2;4;1;false;true;;0;0;as you leave this once holy \place to face the agents of \darkness, you are struck by \a feeling that you will \likely never return.|
+ 2;4;2;true;true;;0;1;did your goddess feel the \same when she stood alone \against the dark gods?]],"|")
+ 
+ --load data into text_data 
+ for i=1,#temp_text_data do
+ 	local x,y,order,text_end,set_selfswitch,switch,story_req,set_story,text=unpack(split(temp_text_data[i],";"))
+ 	local split_text=split(text,"\\")
+ 	
+ 	if #split_text>1 then
+ 		local temp_text=""
+ 		for i=1,#split_text do
+ 			temp_text=temp_text..split_text[i]..chr(10)
+ 		end		
+ 		--override text with temp
+ 		text=temp_text
+ 	end
+ 	--add text to text_data
+ 	add_text(x,y,order,text_end,set_selfswitch,switch,story_req,set_story,text)
+ end	
+end
+
 function add_text(x,y,order,text_end,set_selfswitch,switch,story_req,set_story,text)
+	local end_flag= text_end=="true" and true or false
+	local self_flag= set_selfswitch=="true" and true or false
 --x,y that triggers it
 --the boolean here is being set for normal iteration as false by default
 --order of text as a number
@@ -1284,7 +1322,7 @@ function add_text(x,y,order,text_end,set_selfswitch,switch,story_req,set_story,t
 --switch is a string that will be looked up if true otherwise ignore
 --story_req is a num of the required story_beat, if 0 then doesn't matter
 --set_story sets the story beat
-	add(text_data,{x+y*128,false,order,text_end,set_selfswitch,false,switch,story_req,set_story,text})
+	add(text_data,{x+y*128,false,order,end_flag,self_flag,false,switch,story_req,set_story,text})
 end
 
 function get_text(x,y)
@@ -1296,7 +1334,20 @@ function get_text(x,y)
 	if exists then
 		exists+=next_text
 		local index,read,order,text_end,set_self,self,switch,story_req,set_story,text=unpack(text_data[exists])
-		--show text
+		local switch_exists=exists_in(switches,switch)
+		
+		--check switches
+		if switch_exists then
+			if switches[switch_exists][2]==false then
+				return nil
+			end
+		end
+		--check story req
+		if story_req~=0 and story_req>story_beat then
+			return nil
+		end
+		
+		--show text if not read yet
 		if read then
 			return nil
 		else
@@ -1305,6 +1356,10 @@ function get_text(x,y)
 			--update selfswitch as needed
 			if set_self then
 				text_data[exists][6]=true
+			end
+			--update story beat as needed
+			if story_beat<set_story then
+				story_beat=set_story
 			end
 			--iterate if needed
 			if text_end then
