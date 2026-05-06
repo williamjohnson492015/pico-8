@@ -86,27 +86,27 @@ function init_npcs()
 	npc_data={}
 	--map1
 	add(npc_data,split([[
-	136,3,10,"elder";
-	134,12,4,"kid";
-	133,7,3,"kid";
-	132,6,8,"kid";
-	135,7,8,"kid";
-	128,12,8,"person";
-	129,8,2,"person";
-	130,11,10,"person";
-	131,9,10,"person";
-	139,12,2,"guard";
-	141,7,13,"guard";
-	142,9,13,"guard";
-	163,15,3,"monster";
-	166,8,14,"monster";
-	164,7,15,"monster";
-	166,8,15,"monster";
-	164,9,15,"monster";
-	162,3,14,"monster";
-	167,2,15,"monster";
-	162,12,14,"monster";
-	167,13,15,"monster"]],";"))
+	1,elder,136,3,10;
+	2,kid,134,12,4;
+	3,kid,133,7,3;
+	4,kid,132,6,8;
+	5,kid,135,7,8;
+	6,villager,128,12,8;
+	7,villager,129,8,2;
+	8,villager,130,11,10;
+	9,villager,131,9,10;
+	10,guard,139,12,2;
+	11,guard,141,7,13;
+	12,guard,142,9,13;
+	13,monster,163,15,3;
+	14,monster,166,8,14;
+	15,monster,164,7,15;
+	16,monster,166,8,15;
+	17,monster,164,9,15;
+	18,monster,162,3,14;
+	19,monster,167,2,15;
+	20,monster,162,12,14;
+	21,monster,167,13,15]],";"))
 end
 
 function init_inventory()
@@ -443,14 +443,14 @@ end
 function draw_intro()
 	cls()
 	active_text="\n   traveling bard studios\n\n          presents"
-	draw_text()
+	draw_text(4,14,4,48)
 end
 
 --main menu state draw
 function draw_mainmenu()
 	cls() 
 	active_text="\n   knights of power:\n\n              last light"
-	draw_text()
+	draw_text(4,14,4,48)
 end
 
 --battle state draw
@@ -470,7 +470,6 @@ function draw_game()
 		draw_map()
 		draw_npcs()
 		draw_player()
-		draw_text()
 		if (not active_text) then
 			--x button checks
 			if (btnp(❎) and (not menu_active)) then
@@ -574,6 +573,9 @@ function draw_game()
 				end
 				--options
 			end
+		else
+			draw_text()
+			--draw_textbox(active_text)
 		end
 		--==testing area==
 		--print(tile,12)
@@ -752,21 +754,23 @@ function draw_print(split_string,x,y,color_flag)
 end
 
 function draw_textbox(text,face)
+	--faces: default 64;hero 66
 	face=face or 64
 	textx=mapx*8
 	texty=mapy*8+96
 	
+	--draw_box(3,15,0,52,face)
 	draw_box(3,15,0,96,face)
-	print(text,textx+4,texty+4,7)
+	print(text,textx+10,texty+7,7)
 end
 
 function draw_text(rows,col,x,y)
 	--local iterate=iterate or false
 	--local text_index=text_index or 0
-	local rows=rows or 4
+	local rows=rows or 3
 	local col=col or 14
 	local x=x or 4
-	local y=y or 48
+	local y=y or 52
 	--end
 	 
 	if active_text then
@@ -1183,9 +1187,7 @@ end
 
 function interact(x,y)
 	--check for text
-	--if is_tile(text,x,y) then
-	active_text=get_text(x,y)
-	--end	
+	active_text=get_text(x,y)	
 end
 
 -->8
@@ -1230,7 +1232,7 @@ end
 function draw_npcs()
 	for i=1,#npc_data do
 		for j=1,#npc_data[i] do
-			local sprite,x,y=unpack(split(npc_data[i][j],","))
+			local sprite,x,y=unpack(split(npc_data[i][j],","),3,5)
 			draw_npc(sprite,x,y)
 		end
 	end
@@ -1289,8 +1291,9 @@ function set_alltext()
 --x,y,order,end?,self?,switch,story_req,set_story,text	
 	--map1
 	temp_text_data=split([[
-	2;4;1;false;true;;0;0;as you leave this once holy \place to face the agents of \darkness, you are struck by \a feeling that you will \likely never return.|
- 2;4;2;true;true;;0;1;did your goddess feel the \same when she stood alone \against the dark gods?]],"|")
+	2;4;1;false;true;;0;0;as you leave this once holy \place to face the agents of \darkness, you are struck by|
+ 2;4;2;flase;true;;0;0;a feeling that you will \likely never return.|
+ 2;4;3;true;true;;0;1;did your goddess feel the \same when she stood alone \against the dark gods?]],"|")
  
  --load data into text_data 
  for i=1,#temp_text_data do
