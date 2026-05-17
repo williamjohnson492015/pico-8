@@ -104,17 +104,17 @@ function init_npcs()
 	--map1
 	npc_temp1=split([[
 	1,elder,136,3,10;
-	2,kid,134,12,4;
+	2,kid,134,11,1;
 	3,kid,133,7,3;
 	4,kid,132,6,8;
 	5,kid,135,7,8;
 	6,villager,128,12,8;
-	7,villager,129,8,2;
+	7,villager,129,9,2;
 	8,villager,130,11,10;
 	9,villager,131,9,10;
-	10,guard,139,12,2;
+	10,guard,142,13,3;
 	11,guard,141,7,13;
-	12,guard,142,9,13;
+	12,guard,139,9,13;
 	13,monster,163,15,3;
 	14,monster,166,8,14;
 	15,monster,164,7,15;
@@ -127,8 +127,27 @@ function init_npcs()
 
 --npcid,order,end?,self?,switch,story_req,set_story,text		
 	npc_temp2=split([[
-	1;1;false;false;;0;0;in our most dire need, where \are the gnomes, the wild men, \and the wizards of the spiral|
-	1;2;true;false;;0;0;tower? will they stand by & \watch us burn?! or...are they \already dead?]],"|")
+	1;64;1;false;false;;0;0;in our most dire need, where \are the gnomes, the wild men, \and the wizards of the spiral|
+	1;64;2;true;false;;0;0;tower? will they stand by & \watch us burn?! or...are they \already dead?|
+	2;64;1;true;false;;0;0;my dad said he heard something\by this side of the wall. he\looks worried...i'm scared.|
+	3;64;1;true;false;;0;0;what are those at the gate \yelling about? what's going \on?|
+	4;64;1;false;true;;0;0;my grandma said you shouldn't\show monsters fear. it only\makes them stronger.|
+	4;64;2;false;true;;0;0;i'm still scared though...|
+	4;66;3;false;true;;0;0;you don't have to be afraid.\i won't let them inside these\walls. the light will prevail.|
+	4;64;4;false;true;;0;0;but...aren't you scared too?|
+	4;66;5;false;true;;0;0;of course. but sometimes we\have to fight what is in front\of us, even if we're scared.|
+	4;66;6;true;true;;0;0;because the cost of not doing\so is too high. stay strong.\the light will win this day.|
+	4;64;1;true;false;;0;0;i'm staying strong, mister.|
+	5;64;1;false;false;;0;0;the little blue ones look \kind of cute.|
+	5;64;2;true;false;;0;0;are they really monsters?|
+	6;64;1;false;false;;0;0;i don't care about goddesses,\gods, light, or darkness. but\when a bunch of monsters,|
+	6;64;2;true;false;;0;0;ogres, & lizard folk turn up\with weapons, well... i'm \open to divine intervention.|
+	7;64;1;false;false;;0;0;how can the goddess of light\let this happen? has the \light truly faded?|
+	7;64;2;true;false;;0;0;should we accept our fate?\is this the end?;66|
+	10;64;1;true;false;;0;0;i know it's just beyond this\wall. will it climb or...is it\strong enough to bust through?|
+	11;64;1;true;false;;0;0;this is bad. we simply don't\have the numbers to hold this\many back!|
+	12;64;1;false;false;;0;0;we are supposed to deal with\bandits & the occasional\monster. but this...|
+	12;64;2;true;false;;0;0;this is a small army... what\if it's only the vanguard?]],"|")
 	
 	for i=1,#npc_temp1 do
 		local id,name,sprite,x,y=unpack(split(npc_temp1[i],","))
@@ -500,7 +519,7 @@ function draw_game()
 		draw_player()
 		if (not active_text) then
 			if active_dialogue then
-				draw_textbox()
+				draw_textbox(face)
 			else
 				--x button checks
 				if (btnp(❎) and (not menu_active)) then
@@ -615,9 +634,9 @@ function draw_game()
 		--print(text_data[1][2],0,0,9)
 		--print(text_data[2][2],0,8,9)
 		--print(text_data[3][2],0,16,9)
-		--print(npc_data[1].dialogue[1][2],0,24,0)
-		--print(npc_data[1].dialogue[2][2],0,32,0)
-		--print(npc_data[1].dialogue[3][2],0,40,0)	
+		--print(npc_data[4].dialogue[1][6],0,0,0)
+		--print(npc_data[4].dialogue[2][6],0,8,0)
+		--print(npc_data[4].dialogue[7][6],0,16,0)	
 		--print("diff x: "..abs(p.x - npc_data[1].x),0,32,0)
 		--print("diff y: "..abs(p.y - npc_data[1].y),0,40,0)
 		--==end of testing area==
@@ -1242,7 +1261,7 @@ function interact(x,y)
  	for n in all(npc_data) do
   	-- distance check between player and this specific npc
   	if abs(p.x - n.x) + abs(p.y - n.y) == 1 then
-   	active_dialogue=get_npc_dialogue(n) 
+   	active_dialogue,face=get_npc_dialogue(n) 
    	break
   	end
  	end
@@ -1331,6 +1350,8 @@ function init_text()
 	story_beat=0
 	next_text=0
 	cleaned_reads=true
+	ended=false
+	face=64
 	
 	--setup tables
 	text_data={}
@@ -1361,12 +1382,10 @@ end
 
 function parse_text(split_table,npc_flag,id)
  local id=id or 0
- local	unpack_start= npc_flag==true and 2 or 3
-	local unpack_end= npc_flag==true and 8 or 9
 	local npc_dialogue={}
 	
 	for i=1,#split_table do
- 	local order,text_end,set_selfswitch,switch,story_req,set_story,text=unpack(split(split_table[i],";"),unpack_start,unpack_end)
+ 	local order,text_end,set_selfswitch,switch,story_req,set_story,text=unpack(split(split_table[i],";"),3,9)
  	local split_text=split(text,"\\")
  	local end_flag= text_end=="true" and true or false
 		local self_flag= set_selfswitch=="true" and true or false
@@ -1380,9 +1399,9 @@ function parse_text(split_table,npc_flag,id)
  		text=temp_text
  	end
  	if npc_flag then
- 		local npcid=unpack(split(split_table[i],";"),1,1)
+ 		local npcid,face=unpack(split(split_table[i],";"),1,2)
  		if npcid==id then
- 			add(npc_dialogue,{npcid,false,order,end_flag,self_flag,false,switch,story_req,set_story,text})
+ 			add(npc_dialogue,{npcid,false,order,end_flag,self_flag,false,switch,story_req,set_story,text,face})
  		end
  	else
  		local x,y=unpack(split(split_table[i],";"),1,2)
@@ -1439,27 +1458,31 @@ function get_text(x,y)
 end
 
 function get_npc_dialogue(npc)
-	local line_index=1
+	local line_index=first_available_dialogue(npc)
 	local empty=is_empty(npc.dialogue)
+	
 	--does this npc have dialogue?
 	if empty then
 		return nil
 	else
-		line_index+=next_text
-		local npcid,read,order,text_end,set_self,self,switch,story_req,set_story,text=unpack(npc.dialogue[line_index])
+		local npcid,read,order,text_end,set_self,self,switch,story_req,set_story,text,face=unpack(npc.dialogue[line_index])
 		local checked=text_check(read,text_end,switch,story_req,set_story)
 		
 		--show text if not read yet
-		if checked then
+		if checked and ended==false then
 			--update read
 			npc.dialogue[line_index][2]=true
 			--update selfswitch as needed
 			if set_self then
 				npc.dialogue[line_index][6]=true
 			end
-			--send text
-			return text
+			if text_end then
+				ended=true
+			end
+			--send text and face
+			return text,face
 		else
+			ended=false
 			return nil
 		end
 	end	
@@ -1515,6 +1538,17 @@ function clean_reads()
 		end
 	end
 	cleaned_reads=true
+end
+
+function first_available_dialogue(npc)
+	local n=#npc.dialogue
+	
+	for i=1,n do
+		if npc.dialogue[i][2]==false and npc.dialogue[i][6]==false then
+			return i
+		end
+	end
+	return n
 end
 
 function add_cutscene(map_num,seq,switch,obj,action,key,dest,frames,text)
