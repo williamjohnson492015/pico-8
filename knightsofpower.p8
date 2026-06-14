@@ -231,7 +231,8 @@ function init_statuseffect()
 	7,swift,7,3,0,0;
 	8,smart,8,3,0,0;
 	9,super,10,3,0,0;
-	10,safe,0,0,0,0]],";")
+	10,safe,0,0,0,0;
+	11,stun,0,0,0,0]],";")
 end
 
 function init_temp_stats()
@@ -1066,8 +1067,10 @@ function use_item(use_type)
 	init_use_menu()
 end
 
-function change_statuseffects(status_num,add_boolean)
+function change_statuseffects(status_num,add_boolean,for_enemy)
+	local for_enemy=for_enemy or false
 	local snum,sdesc,stat1,val1,stat2,val2=lookup_statuseffect_data(status_num)
+	
 	if add_boolean then
 		local exists=exists_in(p.status,sdesc)
 		if exists then
@@ -1613,11 +1616,13 @@ function init_battle()
 	--battle test data
 	battle={
 		state=1,
-		enemy={hp=15,maxhp=15,atk=3,name="slime"},
+		enemy={hp=15,maxhp=15,atk=10,def=4,name="slime",status={}},
 		message="your turn!",
 		battle_select=1, --1=attack,2=heal 
 		anim_timer=0,
-		frames=0
+		frames=0,
+		player_defends=false,
+		enemy_defends=false
 	}
 	--anim config
 	anim={
@@ -1641,19 +1646,29 @@ function update_battle()
 	end		
 	if battle.state==battle_state.player_turn then
 		--move select
-		if btnp(2) then battle.battle_select=1 end
-		if btnp(3) then battle.battle_select=2 end
+		if btnp(2) then 
+			battle.battle_select-=1
+			if battle.battle_select<1 then
+				battle.battle_select=4
+			end 
+		end
+		if btnp(3) then 
+			battle.battle_select+=1 
+			if battle.battle_select>4 then
+				battle.battle_select=1
+			end
+		end
 		--confirm action
 		if btnp(4) and battle.anim_timer<=0 then
 			if battle.battle_select==1 then
-				--attack
-				local dmg=p.atk+flr(rnd(3))
+				--sword attack
+				local dmg=max(p.atk+flr(rnd(3))-battle.enemy.def,1)
 				play_anim(
 					20,
 					function() 
 						local shake=flr(rnd(3))-1 
 						spr(224,58+shake,52+shake)
-						spr(198,59,30)
+						spr(198,59,32)
 					end,
 					function()
 						battle.enemy.hp-=dmg
@@ -1664,25 +1679,41 @@ function update_battle()
 							battle.enemy.hp=0
 							battle.state=battle_state.win
 							battle.message="you won!"
+							--temp
 							slime_defeated=true
+							--end of temp
 							battle.anim_timer=60
 							return
 						end
 						battle.state=battle_state.enemy_turn
 					end)	
 			elseif battle.battle_select==2 then
-				--heal
-				local heal=4+flr(rnd(4))
+				--shield
+				local dmg=max(flr(p.atk/2)+flr(rnd(3))+p.shield_score-battle.enemy.def,1)
+				local stun_chance=rnd(1)<0.25 --25% chance true
 				play_anim(
-					15,
-					function()
-						local c=anim.frames%2==0 and 11 or 7
-						draw_bar(35,80,p.hp,p.maxhp,c)
+					10,
+					function() 
+						local shake=flr(rnd(3))-1 
+						spr(224,58+shake,52+shake)
+						spr(198,59,32)
 					end,
 					function()
-						p.hp=min(p.hp+heal,p.maxhp)
-						battle.message="healed "..heal.." hp!"
+						player_defends=true
+						battle.enemy.hp-=dmg
+						battle.message="you hit for "..dmg.."!"
 						battle.anim_timer=30
+						--check win
+						if battle.enemy.hp<=0 then
+							battle.enemy.hp=0
+							battle.state=battle_state.win
+							battle.message="you won!"
+							--temp
+							slime_defeated=true
+							--end of temp
+							battle.anim_timer=60
+							return
+						end
 						battle.state=battle_state.enemy_turn
 					end)	
 			end
@@ -1690,13 +1721,16 @@ function update_battle()
 	elseif battle.state==battle_state.enemy_turn then
 		--wait for animation, then enemy acts
 		if battle.anim_timer<=0 then
-			local dmg=battle.enemy.atk+flr(rnd(3))
+			local dmg=max(battle.enemy.atk+flr(rnd(3))-p.def,1)
+			if player_defends then
+				dmg=max(flr(dmg/2),1)
+			end
 			play_anim(
 				dmg*3,
 				function()
 					local shake=flr(rnd(3))-1
 					rectfill(0,0,127,127,0)
-					spr(198,59,30+shake)
+					spr(198,59,32+shake)
 					spr(224,58,52)
 				end,
 				function()
@@ -1722,46 +1756,46 @@ function update_battle()
 	end
 end
 
-
 function draw_battle()
 	cls()
 	--enemy info
 	print(battle.enemy.name,35,10,7)
 	draw_bar(35,17,battle.enemy.hp,battle.enemy.maxhp,8)
 	--player info
-	print("????",35,73,7)
-	draw_bar(35,80,p.hp,p.maxhp,11)
-	draw_bar(35,87,p.mp,p_maxmp,9)
+	--draw_box(3,8,30,64)
+	print("????",35,68,7)
+	draw_bar(35,75,p.hp,p.maxhp,11)
+	draw_bar(35,82,p.mp,p_maxmp,9)
 	--sprite w/ override
 	if battle.state==battle_state.anim and anim.fn then
 		anim.fn()
 	else
 		if battle.enemy.hp>0 then
 			--enemy
-			spr(198,59,30)
+			spr(198,59,32)
 		end
 		--player
 		spr(224,58,52)
 	end
-	--message box
-	rectfill(0,96,127,127,0)
-	rect(0,96,127,127,7)
-	print(battle.message,4,100,7)
 	--action menu (player turn only)
 	if battle.state==battle_state.player_turn then
-		print((battle.battle_select==1 and ">" or " ").."attack",4,110,7)
-		print((battle.battle_select==2 and ">" or " ").."heal",4,118,7) 
-	end
-	--win/lose overlay
+		print((battle.battle_select==1 and ">" or " ").."sword",4,96,7)
+		print((battle.battle_select==2 and ">" or " ").."shield",4,104,7) 
+		print((battle.battle_select==3 and ">" or " ").."skills",4,112,7)
+		print((battle.battle_select==4 and ">" or " ").."items",4,120,7)
+ end
+	--win/lose overlay & battle log
 	if battle.state==battle_state.win or battle.state==battle_state.lose then
 		local col=battle.state==battle_state.win and 11 or 8
 		print(battle.message,44,44,col)
+	else
+		print(battle.message,37,96,7)
 	end
 end
 
 function draw_bar(x,y,val,maxval,col)
 	local w=40
-	rect(x,y,x+w,y+4,7)
+	--rect(x,y,x+w,y+4,7)
 	local fill=max(0,flr((val/maxval)*w)-1)
 	if fill>0 then rectfill(x+1,y+1,x+fill,y+3,col) end
 	print(val.."/"..maxval,x+w+2,y,7)
@@ -1773,6 +1807,24 @@ function play_anim(maxframes,fn,done)
 	anim.fn=fn
 	anim.done=done
 	battle.state=battle_state.anim
+end
+
+function heal_anim(heal)
+	--items and skills should use
+	--this by passing heal amount
+	local heal=heal or p.maxhp-p.hp
+	play_anim(
+		15,
+		function()
+			local c=anim.frames%2==0 and 11 or 7
+			draw_bar(35,75,p.hp,p.maxhp,c)
+		end,
+		function()
+			p.hp=min(p.hp+heal,p.maxhp)
+			battle.message="healed "..heal.." hp!"
+			battle.anim_timer=30
+			battle.state=battle_state.enemy_turn
+		end)
 end
 __gfx__
 000000000dd666000dd666004444444433344454335d5dd333333333335ddd536644446666444466a782287a66666666ddbbbb333dddbb3d3333333333377333
