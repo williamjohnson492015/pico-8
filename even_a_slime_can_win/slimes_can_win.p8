@@ -42,6 +42,9 @@ function init_game()
 	bbeg_defeated=false
 	--setup calls
 	init_map() --in map code
+	init_titles()
+	init_skills()
+	init_skillpools()
 	--init_npcs() --in dialogue code
 	init_party() --in party code
 	set_wait(30)
@@ -57,7 +60,173 @@ function init_battle()
 	_draw=draw_battle
 end
 
---init menus, windows, etc
+--init game data
+function init_titles()
+	titles={
+		immortal={
+			name="The Immortal",
+			sprite=1,
+			zones={
+				{label="miss",  zone_start=0,   zone_stop=90,  result="miss"},
+				{label="block", zone_start=90,  zone_stop=200, result="block"},
+				{label="hit",   zone_start=200, zone_stop=330, result="hit"},
+				{label="taunt",  zone_start=330, zone_stop=360, result="taunt"}
+			}
+		},
+		quick_blow={
+			name="The Quick Blow",
+			sprite=3,
+			zones={
+				{label="miss",   zone_start=0,   zone_stop=100, result="miss"},
+				{label="hit",    zone_start=100, zone_stop=270, result="hit"},
+				{label="fumble", zone_start=270, zone_stop=310, result="miss"},
+				{label="crit",   zone_start=310, zone_stop=360, result="crit"}
+			}
+		},
+		eldest={
+			name="The Eldest's Legacy",
+			sprite=4,
+			zones={
+				{label="miss",   zone_start=0,   zone_stop=60,  result="miss"},
+				{label="bonus",  zone_start=60,  zone_stop=140, result="bonus"},
+				{label="hit",    zone_start=140, zone_stop=330, result="hit"},
+				{label="crit",   zone_start=330, zone_stop=360, result="crit"}
+			}
+		},
+		slip_master={
+			name="The Slip Master",
+			sprite=3,
+			zones={
+				{label="miss",   zone_start=0,   zone_stop=100, result="miss"},
+				{label="hit",    zone_start=100, zone_stop=270, result="hit"},
+				{label="fumble", zone_start=270, zone_stop=310, result="miss"},
+				{label="dodge",   zone_start=310, zone_stop=360, result="dodge"}
+			}
+		},
+		coiled={
+			name="The Coiled One",
+			sprite=3,
+			zones={
+				{label="miss",   zone_start=0,   zone_stop=100, result="miss"},
+				{label="hit",    zone_start=100, zone_stop=270, result="hit"},
+				{label="delay", zone_start=270, zone_stop=310, result="delay"},
+				{label="miss",   zone_start=310, zone_stop=360, result="miss"}
+			}
+		},
+		constrictor={
+			name="The Constrictor",
+			sprite=3,
+			zones={
+				{label="miss",   zone_start=0,   zone_stop=100, result="miss"},
+				{label="hit",    zone_start=100, zone_stop=270, result="hit"},
+				{label="constrict", zone_start=270, zone_stop=310, result="constrict"},
+				{label="miss",   zone_start=310, zone_stop=360, result="miss"}
+			}
+		},
+		red={
+			name="The Red",
+			sprite=2,
+			zones={
+				{label="miss", zone_start=0,   zone_stop=160, result="miss"},
+				{label="hit",  zone_start=160, zone_stop=300, result="hit"},
+				{label="crit", zone_start=300, zone_stop=340, result="crit"},
+				{label="free", zone_start=340, zone_stop=360, result="free"}
+			}
+		},
+		once_red={
+			name="The Once Red",
+			sprite=2,
+			zones={
+				{label="miss", zone_start=0,   zone_stop=160, result="miss"},
+				{label="hit",  zone_start=160, zone_stop=300, result="hit"},
+				{label="crit", zone_start=300, zone_stop=340, result="crit"},
+				{label="free", zone_start=340, zone_stop=360, result="free"}
+			}
+		},
+		green={
+			name="The Green",
+			sprite=2,
+			zones={
+				{label="miss", zone_start=0,   zone_stop=160, result="miss"},
+				{label="hit",  zone_start=160, zone_stop=300, result="hit"},
+				{label="crit", zone_start=300, zone_stop=340, result="crit"},
+				{label="free", zone_start=340, zone_stop=360, result="free"}
+			}
+		},
+		metal_sworn={
+			name="The Metalsworn",
+			sprite=2,
+			zones={
+				{label="miss", zone_start=0,   zone_stop=160, result="miss"},
+				{label="hit",  zone_start=160, zone_stop=300, result="hit"},
+				{label="crit", zone_start=300, zone_stop=340, result="crit"},
+				{label="free", zone_start=340, zone_stop=360, result="free"}
+			}
+		},
+		metal={
+			name="The Metal",
+			sprite=2,
+			zones={
+				{label="miss", zone_start=0,   zone_stop=160, result="miss"},
+				{label="hit",  zone_start=160, zone_stop=300, result="hit"},
+				{label="crit", zone_start=300, zone_stop=340, result="crit"},
+				{label="free", zone_start=340, zone_stop=360, result="free"}
+			}
+		},
+		creeping_death={
+			name="The Creeping Death",
+			sprite=2,
+			zones={
+				{label="miss", zone_start=0,   zone_stop=160, result="miss"},
+				{label="hit",  zone_start=160, zone_stop=300, result="hit"},
+				{label="crit", zone_start=300, zone_stop=340, result="crit"},
+				{label="free", zone_start=340, zone_stop=360, result="free"}
+			}
+		}
+	}
+end
+
+function init_skills()
+	skills={
+		--tank
+		shield_bash={name="shield bash", mp_cost=2, desc="stun + damage"},
+		fortify={name="fortify", mp_cost=3, desc="raise defense 2 turns"},
+		taunt={name="taunt", mp_cost=1, desc="draw enemy attention"},
+		--mage
+		fireball={name="fireball", mp_cost=4, desc="aoe fire damage"},
+		frost_bolt={name="frost bolt", mp_cost=3, desc="single target + slow"},
+		arcane_shield={name="arcane shield", mp_cost=5, desc="magic barrier"},
+		--rogue
+		backstab={name="backstab", mp_cost=2, desc="high damage from stealth"},
+		smoke_bomb={name="smoke bomb", mp_cost=2, desc="blind enemies"},
+		pickpocket={name="pickpocket", mp_cost=1, desc="steal item"},
+		--healer
+		mend={name="mend", mp_cost=2, desc="restore hp"},
+		revive={name="revive", mp_cost=6, desc="resurrect ally"},
+		cleanse={name="cleanse", mp_cost=3, desc="remove debuffs"}
+	}
+end
+
+function init_skillpools()
+	skill_pools={
+  		tank={skills.shield_bash, skills.fortify, skills.taunt},
+  		mage={skills.fireball, skills.frost_bolt, skills.arcane_shield},
+  		rogue={skills.backstab, skills.smoke_bomb, skills.pickpocket},
+  		healer={skills.mend, skills.revive, skills.cleanse}
+	}
+end
+
+--init helper functions
+function init_temp_stats()
+	--1=str 2=dex 3=con 4=mag
+	--5=atk 6=def 7=spd 8=matk 
+	--9=mdef 10=maxhp 11=maxmp
+	temp_stats={}
+	for i=1,11 do
+		add(temp_stats,0)
+	end
+	return temp_stats
+end
 
 --main config
 _init = init_intro
@@ -75,7 +244,7 @@ function update_mainmenu()
 	local option_cnt=#menu_options
 	if wait_cnt==2 then
 		if menu_control(#menu_options) then
-		 if menu_sel==1 then init_game() end
+			if menu_sel==1 then init_game() end
 			if menu_sel==2 then init_savemenu() end
 		end
 	end
@@ -96,7 +265,7 @@ function update_game()
 			--move_party()
 			check_win_lose()
 		else
-			if (btnp(5))	extcmd("reset")
+			if (btnp(5)) extcmd("reset")
 		end
 	end
 end
@@ -136,7 +305,7 @@ end
 
 function draw_game()
 	cls()
-	if gameover==false then
+	if game_over==false then
 		if wait_check() then
 			draw_map()
 		end
@@ -150,11 +319,7 @@ end
 --draw misc
 function draw_win_lose()
 	camera()
-	if (game_win) then
-		print("★ you win! ★",37,64,7)
- else
- 	print("game over! :(",38,64,7)
- end
+	game_win and print("★ you win! ★",37,64,7) or print("game over! :(",38,64,7)
  	print("press ❎ to play again",20,72,5)
 end
 -->8
@@ -342,7 +507,7 @@ function init_battle()
 	battle_state={
 		player_turn=1,
 		player_spin=2,
-	 player_result=3,
+	 	player_result=3,
 		enemy_turn=4,
 		anim=5,
 		win=6,
@@ -739,28 +904,85 @@ end
 
 function init_party()
 	party={
-		{
-			name="slime1",
-			maxhp=4,
-			hp=4
-		},
-		{
-			name="slime2",
-			maxhp=4,
-			hp=4
-		},
-		{
-			name="slime3",
-			maxhp=4,
-			hp=4
-		},
-		{
-			name="slime4",
-			maxhp=4,
-			hp=4
+		x=0,
+		y=0,
+		dx=0, --x facing: -1 (left), 0, 1 (right)
+		dy=-1, --y facing: -1 (up), 0, 1 (down)
+		members={
+			init_member("slime1,"),
+			init_member(),
+			init_member(),
+			init_member()
 		}
 	}
+	set_stats()
+	--starting inventory
+	p_inventory={}
+	set_inventory()
 end
+
+function init_member(string_data)
+	local name,title,str,dex,con,mag=unpack(split(string_data))
+	--add math
+	return {
+		name=name,
+		title=title,
+		sprite=titles[title].sprite,
+		mastered_titles={},
+		active_zones=titles[title].zones,
+		maxhp=con*5,
+		hp=con*5,
+		maxmp=0,
+		mp=0,
+		atk=str*2,
+		def=con*2,
+		spd=dex*2,
+		matk=mag*2,
+		mdef=mag*2,
+		str=str,
+		dex=dex,
+		con=con,
+		mag=mag,
+		status={},
+		temp_stats=init_temp_stats(),
+		skills=skill_pools[title]
+	}
+end
+
+function refresh_stats(member)
+--sets all member stats
+	local refresh=refresh or false
+	local temp_str,temp_dex,temp_con,temp_mag,temp_atk,temp_def,temp_spd,temp_matk,temp_mdef=unpack(member.temp_stats)
+	local maxhp_start=p.maxhp
+	
+	p_str_total=p.str+temp_str
+	p_dex_total=p.dex+temp_dex
+	p_con_total=p.con+temp_con
+	p_mag_total=p.mag+temp_mag
+	
+	p.atk = p.str + p.lvl + p.sword_score + temp_atk
+	p.def = p.con + p.shield_score + temp_def
+	p.spd = p.dex + p.lvl + temp_spd
+	p.matk = p.mag + p.lvl + p.sword_score + temp_matk
+	p.mdef = p.mag + p.shield_score + temp_mdef
+	p.maxhp = (p.con*4) + (p.lvl*4) + (temp_con*3)
+	if refresh then
+		--if maxhp increases hp increases
+		local hpdiff=p.maxhp-maxhp_start
+		if hpdiff>0 then
+			p.hp+=hpdiff
+		end
+		--if maxhp decreases hp decreases to match maxhp if over it
+		if p.hp>p.maxhp then
+			p.hp=p.maxhp
+		end
+		return
+	end
+	p.hp = p.maxhp
+end
+
+
+
 -->8
 --utility functions
 
